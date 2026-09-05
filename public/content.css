@@ -1,0 +1,88 @@
+/*
+ * 콘텐츠 스크립트가 쓰는 스타일.
+ *
+ * all_frames로 주입되므로 카페 홈 / 게시판 / 게시글 iframe 3개 문서에 모두 적용된다.
+ * SPA가 요소를 새로 삽입해도 브라우저가 알아서 적용하므로 변경 감지가 필요 없다.
+ *
+ * 켜고 끄기는 src/content/blur/index.ts가 <html>에 마커 클래스를 붙였다 떼는 것으로 한다.
+ */
+
+/* --- 이미지 가리기 (몰컴모드) --- */
+
+html.IDC_blur img,
+html.IDC_blur video,
+html.IDC_blur .se-image-resource {
+  opacity: 0.05;
+  transition: opacity 0.15s ease-in-out;
+}
+
+/*
+ * 배경 이미지로 그려지는 썸네일.
+ *
+ * opacity는 자식까지 함께 흐려진다. [style*='background-image']를 문서 전체에 걸면
+ * 네이버 GNB의 계정 이름 박스(div.gnb_my_namebox)처럼 텍스트를 담은 요소까지 잡혀
+ * 닉네임이 사라진다. 그래서 카페 본문 영역 안으로만 한정한다.
+ */
+html.IDC_blur_bg #cafe_content [style*='background-image'],
+html.IDC_blur_bg #main-area [style*='background-image'],
+html.IDC_blur_bg .article-board [style*='background-image'],
+html.IDC_blur_bg .ArticleContentBox [style*='background-image'],
+html.IDC_blur_bg .thumb,
+html.IDC_blur_bg .se-module-oglink-thumbnail {
+  opacity: 0.05;
+  transition: opacity 0.15s ease-in-out;
+}
+
+/* 마우스를 올리면 원본을 보여 준다. 위 규칙보다 명시도가 높아 덮어쓴다. */
+html.IDC_blur_hover img:hover,
+html.IDC_blur_hover video:hover,
+html.IDC_blur_hover .se-image-resource:hover,
+html.IDC_blur_hover #cafe_content [style*='background-image']:hover,
+html.IDC_blur_hover #main-area [style*='background-image']:hover,
+html.IDC_blur_hover .article-board [style*='background-image']:hover,
+html.IDC_blur_hover .ArticleContentBox [style*='background-image']:hover,
+html.IDC_blur_hover .thumb:hover,
+html.IDC_blur_hover .se-module-oglink-thumbnail:hover {
+  opacity: 1;
+}
+
+/* --- 읽은 글 표시 --- */
+
+.IDC_read,
+.IDC_read * {
+  color: #959595 !important;
+}
+
+/* --- 전체글보기에서 제외한 게시판 --- */
+
+.IDC_hidden_board {
+  display: none !important;
+}
+
+/* "N개 숨김 · 펼치기" 배지 */
+#IDC_except_badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 6px 0;
+  padding: 6px 10px;
+  border-radius: 6px;
+  background: #f5f6f8;
+  color: #888;
+  font-size: 12px;
+}
+
+#IDC_except_badge button {
+  padding: 2px 8px;
+  border: 1px solid #d0d0d0;
+  border-radius: 4px;
+  background: #fff;
+  color: #666;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+#IDC_except_badge button:hover {
+  border-color: #03c75a;
+  color: #03c75a;
+}

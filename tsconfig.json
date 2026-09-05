@@ -11,14 +11,9 @@
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
-      "@/*": [
-        "src/*"
-      ]
+      "@/*": ["src/*"]
     },
-    "typeRoots": [
-      "./node_modules/@types",
-      "src/util"
-    ]
+    "typeRoots": ["./node_modules/@types", "src/util"]
   },
   "include": [
     "src/**/*.d.ts",
@@ -26,5 +21,5 @@
     "src/**/*.mts",
     "src/**/*.svelte"
   ],
-  "extends": "@tsconfig/svelte/tsconfig.json",
+  "extends": "@tsconfig/svelte/tsconfig.json"
 }
