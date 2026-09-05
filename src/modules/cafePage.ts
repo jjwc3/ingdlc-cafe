@@ -1,18 +1,17 @@
 /**
- * 네이버 카페 주소 판별.
+ * Naver Cafe URL classification.
  *
- * 2026년 현재 카페는 레이아웃이 두 가지 공존하고, 게시글은 3중 중첩이다.
+ * Two layouts coexist, and an article page nests three levels deep:
  *
- *   [A] 카페 홈   cafe.naver.com/{name}
- *                  └ iframe#cafe_main → /MyCafeIntro.nhn?clubid=X   (레거시 마크업)
- *   [B] 게시판    cafe.naver.com/f-e/cafes/{id}/menus/{menuId}      (Next.js SPA)
- *   [C] 게시글    [B] + #cafe_content 안에 iframe#cafe_main
- *                  → /ca-fe/cafes/{id}/articles/{articleId}
- *                     └ #app (React)
+ *   [A] Cafe home  cafe.naver.com/{name}
+ *                   -> iframe#cafe_main -> /MyCafeIntro.nhn?clubid=X  (legacy)
+ *   [B] Board      cafe.naver.com/f-e/cafes/{id}/menus/{menuId}       (Next.js SPA)
+ *   [C] Article    [B] plus an iframe#cafe_main inside #cafe_content
+ *                   -> /ca-fe/cafes/{id}/articles/{articleId} -> #app (React)
  *
- * 그 결과 게시글 링크 형식이 두 가지다. 둘 다 처리해야 한다.
- *   - 레거시: /ArticleRead.nhn?clubid=X&articleid=Y
- *   - 신규:   /f-e/cafes/X/articles/Y  또는  /ca-fe/cafes/X/articles/Y
+ * So article links come in two shapes and both must be handled:
+ *   legacy: /ArticleRead.nhn?clubid=X&articleid=Y
+ *   new:    /f-e/cafes/X/articles/Y  or  /ca-fe/cafes/X/articles/Y
  */
 
 export type CafeView =
@@ -33,10 +32,10 @@ const RE_CAFE_POPULAR = /^\/ca-fe\/cafes\/(\d+)\/popular/;
 const RE_CAFE_MEMBER = /^\/ca-fe\/cafes\/(\d+)\/members\//;
 const RE_CAFE_ANY = /^\/ca-fe\/cafes\/(\d+)\//;
 const RE_HOME = /^\/(\w+)\/?$/;
-/** 주소 어디에서든 cafeId를 회수하기 위한 느슨한 패턴. */
+/** Loose pattern for recovering a cafeId from any URL shape. */
 const RE_ANY_CAFE_ID = /(?:[?&](?:search\.)?clubid=|\/cafes\/)(\d+)/;
 
-/** 경로 어디에서든 articleId를 뽑는다. 신규 경로 형식 우선, 없으면 레거시 쿼리. */
+/** Extracts an articleId: new path form first, then the legacy query. */
 const RE_PATH_ARTICLE = /\/articles\/(\d+)/;
 const RE_QUERY_ARTICLE = /[?&]articleid=(\d+)/i;
 
@@ -69,7 +68,7 @@ export function getCafeView(loc: Location | URL): CafeView {
     return { kind: 'member', cafeId: mMember[1] };
   }
 
-  // 레거시 iframe 내부
+  // Inside the legacy iframe
   if (pathname === '/MyCafeIntro.nhn') {
     const cafeId = params.get('clubid');
     if (cafeId) return { kind: 'intro', cafeId };
@@ -98,7 +97,7 @@ export function getCafeView(loc: Location | URL): CafeView {
   return { kind: 'unknown' };
 }
 
-/** 어떤 형태의 주소에서든 cafeId를 뽑는다. 홈(cafeName만 있는 형태)에서는 undefined. */
+/** cafeId from any URL shape; undefined on the home page, which has none. */
 export function getCafeId(loc: Location | URL): string | undefined {
   const view = getCafeView(loc);
   if (view.kind !== 'home' && view.kind !== 'unknown') return view.cafeId;
@@ -107,8 +106,8 @@ export function getCafeId(loc: Location | URL): string | undefined {
 }
 
 /**
- * 목록 행의 링크에서 articleId를 뽑는다.
- * `/f-e/.../articles/57` 과 `/ArticleRead.nhn?articleid=57` 두 형식을 모두 다룬다.
+ * articleId from a list-row link.
+ * Handles both `/f-e/.../articles/57` and `/ArticleRead.nhn?articleid=57`.
  */
 export function parseArticleId(
   href: string | null | undefined,
@@ -124,7 +123,7 @@ export function parseArticleId(
   return undefined;
 }
 
-/** 게시판(메뉴) 링크에서 menuId를 뽑는다. */
+/** menuId from a board (menu) link. */
 export function parseMenuId(
   href: string | null | undefined,
 ): number | undefined {
@@ -140,12 +139,12 @@ export function parseMenuId(
 }
 
 /**
- * 현재 문서에서 cafeId를 찾는다.
+ * Finds the cafeId for the current document.
  *
- * 카페 홈(`cafe.naver.com/{name}`)처럼 주소에 cafeId가 없는 경우가 있다. 그때는
- * iframe 내부 주소나 페이지 안의 링크(`search.clubid=`, `/cafes/{id}/`)에서 회수한다.
- * 레거시 카페의 사이드바 게시판 목록이 이 경우에 해당해, 회수하지 않으면 수집이 통째로
- * 건너뛰어진다.
+ * Some URLs carry none — the cafe home (`cafe.naver.com/{name}`) for one. Fall
+ * back to the iframe's URL or any link on the page (`search.clubid=`,
+ * `/cafes/{id}/`). A legacy cafe's sidebar board list lives on such a page, so
+ * without this fallback board harvesting is skipped entirely.
  */
 export function resolveCafeId(): string | undefined {
   const fromUrl = getCafeId(location);
@@ -161,7 +160,7 @@ export function resolveCafeId(): string | undefined {
       if (fromIframe) return fromIframe;
     }
   } catch {
-    // 교차 출처면 무시한다.
+    // Ignore cross-origin frames.
   }
 
   const links = document.querySelectorAll<HTMLAnchorElement>(
@@ -174,12 +173,4 @@ export function resolveCafeId(): string | undefined {
   }
 
   return undefined;
-}
-
-/** 최상위 문서가 카페 전체 레이아웃이 아니라 게시글만 단독 로딩된 페이지인지. */
-export function isStandalonePage(): boolean {
-  return (
-    location.pathname.startsWith('/ca-fe/cafes/') &&
-    !document.querySelector('#main-area iframe#cafe_main')
-  );
 }

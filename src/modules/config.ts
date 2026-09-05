@@ -1,22 +1,22 @@
 export interface AppConfig {
-  /** 이미지 가리기 (몰컴모드) */
+  /** Image hiding (stealth mode) */
   blur: {
-    /** 0=OFF, 1=이미지만, 2=이미지+배경이미지 */
+    /** 0=off, 1=images only, 2=images + background images */
     enabled: 0 | 1 | 2;
-    /** 마우스를 올리면 원본 표시 */
+    /** Reveal the original on hover */
     hoverReveal: 0 | 1;
   };
-  /** 읽은 글 표시 */
+  /** Mark articles already read */
   read: {
     enabled: 0 | 1;
   };
-  /** 방송 중 ON AIR 버튼 */
+  /** ON AIR button while streaming */
   liveAlert: {
     enabled: 0 | 1;
   };
-  /** 새 탭 리다이렉트 */
+  /** URL redirects */
   redirect: {
-    /** 모바일 주소를 PC로 전환 */
+    /** Rewrite mobile URLs to PC */
     mobile: 0 | 1;
   };
 }
@@ -38,10 +38,10 @@ export const initialConfig: AppConfig = {
 };
 
 /**
- * 콘텐츠 스크립트용 1회성 읽기.
+ * One-shot read for content scripts.
  *
- * 이 모듈은 svelte를 import 하지 않는다. 리다이렉트 스크립트는 document_start에 실행되므로
- * Svelte 런타임(약 21KB)이 딸려 들어오면 그만큼 늦어진다.
+ * This module deliberately avoids importing svelte: the redirect script runs at
+ * document_start, and pulling in the ~21KB Svelte runtime would delay it.
  */
 export const readConfig = async (): Promise<AppConfig> => {
   try {

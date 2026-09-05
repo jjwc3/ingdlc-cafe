@@ -199,16 +199,6 @@
       />
 
       <MultiSwitch
-        title="새 탭에서 게시글만 로딩"
-        subtitle="카페 전체 대신 본문만"
-        options={[
-          { label: 'OFF', value: 0 },
-          { label: 'ON', value: 1 },
-        ]}
-        bind:value={$configStore.redirect.article}
-      />
-
-      <MultiSwitch
         title="모바일 → PC"
         options={[
           { label: 'OFF', value: 0 },

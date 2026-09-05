@@ -10,7 +10,7 @@
 
   const cafe = $derived(cafes.find((c) => c.cafeId === selectedCafeId));
 
-  /** 아직 제외하지 않은 게시판만 드롭다운에 올린다. */
+  /** Only boards not yet excluded appear in the dropdown. */
   const addable = $derived(
     cafe
       ? Object.entries(cafe.boards)
@@ -20,7 +20,7 @@
       : [],
   );
 
-  /** 제외 중인 게시판. 카탈로그에 이름이 없으면 ID로 표시한다. */
+  /** Currently excluded boards; falls back to the ID when the name is unknown. */
   const excludedList = $derived(
     cafe
       ? cafe.excluded
@@ -71,11 +71,10 @@
   <ElementTitle title="전체글 제외 게시판" subtitle="선택한 게시판을 숨김" />
 
   {#if !loaded}
-    <p class="text-[11px] text-slate-400">불러오는 중…</p>
+    <p class="text-2xs text-slate-400">불러오는 중…</p>
   {:else if cafes.length === 0}
-    <p class="text-[11px] leading-relaxed text-slate-500">
-      카페를 한 번 방문하면 게시판 목록이 여기에 나타납니다. 전체글보기에서
-      게시판 이름 옆의 <b>제외</b> 버튼을 눌러 바로 숨길 수도 있습니다.
+    <p class="text-2xs leading-relaxed text-slate-500">
+      카페를 한 번 방문하면 게시판 목록이 여기에 나타납니다.
     </p>
   {:else}
     {#if cafes.length > 1}
@@ -126,7 +125,7 @@
         {/each}
       </ul>
     {:else}
-      <p class="text-[11px] text-slate-400">제외한 게시판이 없습니다.</p>
+      <p class="text-2xs text-slate-400">제외한 게시판이 없습니다.</p>
     {/if}
   {/if}
 </div>

@@ -33,7 +33,7 @@
     {#each options as opt (opt.value)}
       <button
         type="button"
-        class="relative z-10 flex-1 py-1.5 text-[11px] font-bold transition-colors duration-200
+        class="text-2xs relative z-10 flex-1 py-1.5 font-bold transition-colors duration-200
                {value === opt.value
           ? 'text-blue-600'
           : 'text-slate-500 hover:text-slate-700'}"

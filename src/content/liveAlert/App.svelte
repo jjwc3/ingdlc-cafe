@@ -13,7 +13,7 @@
 
   async function check() {
     try {
-      // 실제 조회는 서비스 워커가 한다(교차 출처 + 탭 간 캐시 공유).
+      // The service worker does the fetch: cross-origin, cached across tabs.
       const res = await chrome.runtime.sendMessage({
         action: 'INGDLC_LIVE_CHECK',
       });
@@ -33,7 +33,7 @@
     }
   }
 
-  // 방송이 켜진 직후 잠깐 깜박여 눈에 띄게 한다.
+  // Blink briefly when the stream goes live, to draw the eye.
   function blink() {
     blinking = true;
     window.setTimeout(() => (blinking = false), 3000);
@@ -63,8 +63,8 @@
 
 <style>
   /*
-   * 카페 페이지 위에 얹히므로 Tailwind(preflight)를 쓰지 않는다.
-   * Svelte가 스코프를 잡아주는 이 블록만 사용한다.
+   * Sits on top of the cafe page, so no Tailwind (its preflight would reset
+   * the host page). Only this Svelte-scoped block is used.
    */
   .onair {
     position: fixed;

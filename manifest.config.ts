@@ -33,7 +33,8 @@ export default defineManifest({
       js: ['src/content/redirect-mobile/index.ts'],
       run_at: 'document_start',
     },
-    // 블러는 마커 클래스만 토글한다. 실제 스타일은 아래 CSS가 담당한다.
+    // 블러는 마커 클래스만 토글한다. 실제 스타일은 이 진입점이 import 하는
+    // content.css가 담당하며, CRXJS가 manifest의 css 배열로 넣어 준다.
     {
       matches: ['https://cafe.naver.com/*'],
       js: ['src/content/blur/index.ts'],
@@ -50,12 +51,6 @@ export default defineManifest({
     {
       matches: ['https://cafe.naver.com/*'],
       js: ['src/content/liveAlert/index.ts'],
-    },
-    // CRXJS가 css 전용 엔트리를 번들하지 못해 public/에 두고 정적 경로로 참조한다.
-    {
-      matches: ['https://cafe.naver.com/*'],
-      css: ['content.css'],
-      all_frames: true,
     },
   ],
   permissions: ['storage'],

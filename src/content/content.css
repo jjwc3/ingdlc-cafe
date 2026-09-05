@@ -1,13 +1,15 @@
 /*
- * 콘텐츠 스크립트가 쓰는 스타일.
+ * Styles used by the content scripts.
  *
- * all_frames로 주입되므로 카페 홈 / 게시판 / 게시글 iframe 3개 문서에 모두 적용된다.
- * SPA가 요소를 새로 삽입해도 브라우저가 알아서 적용하므로 변경 감지가 필요 없다.
+ * Injected into every frame, so it covers all three documents: cafe home,
+ * board, and the article iframe. The browser applies it to SPA-inserted
+ * elements automatically, so nothing has to watch for changes.
  *
- * 켜고 끄기는 src/content/blur/index.ts가 <html>에 마커 클래스를 붙였다 떼는 것으로 한다.
+ * src/content/blur/index.ts imports this file and toggles marker classes on
+ * <html> to turn the rules on and off.
  */
 
-/* --- 이미지 가리기 (몰컴모드) --- */
+/* --- Image hiding (stealth mode) --- */
 
 html.IDC_blur img,
 html.IDC_blur video,
@@ -17,11 +19,11 @@ html.IDC_blur .se-image-resource {
 }
 
 /*
- * 배경 이미지로 그려지는 썸네일.
+ * Thumbnails drawn as background images.
  *
- * opacity는 자식까지 함께 흐려진다. [style*='background-image']를 문서 전체에 걸면
- * 네이버 GNB의 계정 이름 박스(div.gnb_my_namebox)처럼 텍스트를 담은 요소까지 잡혀
- * 닉네임이 사라진다. 그래서 카페 본문 영역 안으로만 한정한다.
+ * opacity fades children too. Applying [style*='background-image'] document-wide
+ * also catches text holders such as Naver's account name box
+ * (div.gnb_my_namebox), blanking the nickname — so it is scoped to cafe content.
  */
 html.IDC_blur_bg #cafe_content [style*='background-image'],
 html.IDC_blur_bg #main-area [style*='background-image'],
@@ -33,7 +35,7 @@ html.IDC_blur_bg .se-module-oglink-thumbnail {
   transition: opacity 0.15s ease-in-out;
 }
 
-/* 마우스를 올리면 원본을 보여 준다. 위 규칙보다 명시도가 높아 덮어쓴다. */
+/* Reveal the original on hover; higher specificity beats the rules above. */
 html.IDC_blur_hover img:hover,
 html.IDC_blur_hover video:hover,
 html.IDC_blur_hover .se-image-resource:hover,
@@ -46,20 +48,20 @@ html.IDC_blur_hover .se-module-oglink-thumbnail:hover {
   opacity: 1;
 }
 
-/* --- 읽은 글 표시 --- */
+/* --- Read articles --- */
 
 .IDC_read,
 .IDC_read * {
   color: #959595 !important;
 }
 
-/* --- 전체글보기에서 제외한 게시판 --- */
+/* --- Boards excluded from the all-articles list --- */
 
 .IDC_hidden_board {
   display: none !important;
 }
 
-/* "N개 숨김 · 펼치기" 배지 */
+/* The "N hidden / reveal" badge */
 #IDC_except_badge {
   display: flex;
   align-items: center;

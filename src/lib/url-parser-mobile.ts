@@ -1,8 +1,8 @@
 /**
- * m.cafe.naver.com 게시글 주소 파서. (원본 js/util/url-parser-mobile.js)
+ * Parser for m.cafe.naver.com article URLs. (from js/url-parser-mobile.js)
  *
- * 원본의 TYPE_DEFAULT와 TYPE_CAFE_NAME은 변환 로직이 완전히 동일해서 'cafeName' 하나로
- * 합쳤다.
+ * The original's TYPE_DEFAULT and TYPE_CAFE_NAME convert identically, so they
+ * are merged into 'cafeName'.
  */
 import { SessionCafeInfo } from './storage';
 
@@ -10,7 +10,8 @@ export type MobileArticleInfo =
   | { type: 'cafeName'; cafeName: string; articleId: string }
   | { type: 'cafeId'; cafeId: string; articleId: string };
 
-// 앞에 /ca-fe가 없으면 뒤에 /도 없어야 하지만 큰 문제는 아님
+// Without the /ca-fe prefix there should be no trailing slash either, but that
+// is harmless to allow.
 const RE_DEFAULT = /^(\/ca-fe)?\/(?<cafeName>\w+)\/(?<articleId>\d+)\/?$/;
 const RE_CAFE_ID =
   /^\/ca-fe\/web\/cafes\/(?<cafeId>\d+)\/articles\/(?<articleId>\d+)\/?$/;
@@ -52,10 +53,8 @@ export function getMobileArticleInfo(
 }
 
 /**
- * PC 게시글 주소로 변환한다.
- *
- * 'cafeName' 형태는 네트워크·스토리지 접근 없이 즉시 계산된다.
- * 'cafeId' 형태만 카페 이름 조회가 필요하다.
+ * Converts to the PC article URL.
+ * 'cafeName' resolves instantly; only 'cafeId' needs a cafe-name lookup.
  */
 export async function getMobileArticleURL(
   info: MobileArticleInfo | undefined,

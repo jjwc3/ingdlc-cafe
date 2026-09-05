@@ -1,7 +1,6 @@
 /**
- * 카페 접속 중 방송이 켜져 있으면 우상단에 ON AIR 버튼을 띄운다.
- *
- * 최상위 문서에만 마운트한다(all_frames 아님).
+ * Shows an ON AIR button while the stream is live.
+ * Top frame only.
  */
 import { mount } from 'svelte';
 
@@ -23,4 +22,4 @@ async function init() {
   mount(App, { target: container });
 }
 
-await init();
+void init();

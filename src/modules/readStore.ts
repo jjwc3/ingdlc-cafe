@@ -1,25 +1,24 @@
 /**
- * 읽은 글 기록.
+ * Read-article history.
  *
- * chrome.storage.local에 카페별 키(`read:{cafeId}`)로 나눠 저장한다.
+ * Kept in chrome.storage.local under one key per cafe (`read:{cafeId}`).
  *
- * 원본(INGDLC for SOOP)은 모든 설정과 모든 카페의 읽은 글을 storage.sync의 `config`
- * 단일 키에 넣었다. sync의 QUOTA_BYTES_PER_ITEM은 8,192바이트라 글이 1,000개쯤 쌓이면
- * 한도를 넘고 그 시점부터 설정 저장 자체가 실패한다. 또 매 기록마다 config 전체를 다시
- * 써서 분당 쓰기 한도(120회)에도 걸린다. local(기본 10MB) + 카페별 분리 + 상한으로 해소했다.
+ * The original (INGDLC for SOOP) packed every setting and every cafe's history
+ * into a single storage.sync `config` key. sync caps an item at 8,192 bytes, so
+ * around a thousand articles overflowed it and settings stopped saving; it also
+ * rewrote the whole config per article, hitting the 120 writes/minute cap.
+ * local (10MB) plus per-cafe keys and a cap avoids both.
  */
 
 /**
- * 카페당 보관할 최대 개수. 넘으면 오래된 것부터 버린다.
- *
- * articleId 하나가 직렬화 시 약 7바이트라 5만 개면 카페당 350KB 남짓이다.
- * chrome.storage.local은 10MB이므로 카페 여러 곳을 다녀도 여유가 있다.
+ * Per-cafe cap; the oldest entries are dropped past this.
+ * One ID serializes to roughly 7 bytes, so 50k is about 350KB per cafe.
  */
 const MAX_PER_CAFE = 50000;
 
 const keyOf = (cafeId: string) => `read:${cafeId}`;
 
-/** cafeId별 메모리 캐시. 목록 렌더마다 storage를 때리지 않기 위함. */
+/** In-memory cache per cafe, so painting a list does not hit storage. */
 const cache = new Map<string, Set<number>>();
 const pendingWrites = new Set<string>();
 let flushTimer: number | undefined;
@@ -43,7 +42,7 @@ export async function getReadArticles(cafeId: string): Promise<Set<number>> {
   return set;
 }
 
-/** 읽음으로 기록한다. 이미 있으면 아무것도 하지 않는다. */
+/** Records an article as read. No-op if already recorded. */
 export async function markRead(
   cafeId: string,
   articleId: number,
@@ -58,7 +57,7 @@ export async function markRead(
   scheduleFlush();
 }
 
-/** 연속 기록을 모아서 한 번에 쓴다. */
+/** Batches consecutive records into a single write. */
 function scheduleFlush() {
   if (flushTimer !== undefined) clearTimeout(flushTimer);
   flushTimer = self.setTimeout(() => {
@@ -77,7 +76,7 @@ async function flush(): Promise<void> {
 
     let ids = [...set];
     if (ids.length > MAX_PER_CAFE) {
-      // Set은 삽입 순서를 유지하므로 앞쪽이 오래된 기록이다.
+      // Set preserves insertion order, so the front holds the oldest entries.
       ids = ids.slice(ids.length - MAX_PER_CAFE);
       cache.set(cafeId, new Set(ids));
     }
@@ -90,7 +89,7 @@ async function flush(): Promise<void> {
   }
 }
 
-/** 특정 카페의 기록을 지운다. cafeId를 생략하면 전체. */
+/** Clears one cafe's history, or all of them when cafeId is omitted. */
 export async function clearReadArticles(cafeId?: string): Promise<void> {
   try {
     if (cafeId) {
@@ -107,7 +106,7 @@ export async function clearReadArticles(cafeId?: string): Promise<void> {
   }
 }
 
-/** 저장된 총 개수. 팝업에서 안내용으로 쓴다. */
+/** Total recorded count, shown in the popup. */
 export async function countReadArticles(): Promise<number> {
   try {
     const all = await chrome.storage.local.get(null);

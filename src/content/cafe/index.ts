@@ -1,12 +1,13 @@
 /**
- * 읽은 글 표시 + 전체글보기 게시판 제외.
+ * Read-article marking and board exclusion in the all-articles list.
  *
- * 게시판·게시글은 Next.js SPA라 목록이 pushState와 함께 부분 재렌더된다. 전체 리로드가
- * 없으므로 폴링 대신 `#cafe_content` MutationObserver 하나로 모든 전환을 잡는다.
- * (목록↔게시글 이동, 뒤로가기, 게시판 전환, 페이지 넘김이 전부 여기로 들어온다)
+ * Boards and articles are a Next.js SPA: the list re-renders in place alongside
+ * pushState, with no full reload. A single MutationObserver on `#cafe_content`
+ * catches every transition (list <-> article, back, board switch, paging), so
+ * no polling is needed.
  *
- * all_frames로 실행되므로 레거시 카페 홈의 iframe(/MyCafeIntro.nhn) 목록도 각 문서가
- * 스스로 처리한다. 그쪽은 #cafe_content가 없어 body를 관찰한다.
+ * Runs in every frame, so the legacy cafe home's iframe (/MyCafeIntro.nhn)
+ * handles its own list. That document has no #cafe_content, so body is watched.
  */
 import { getExcluded, mergeCafeBoards } from '@/modules/boardStore';
 import {
@@ -23,18 +24,18 @@ const READ_CLASS = 'IDC_read';
 const HIDDEN_CLASS = 'IDC_hidden_board';
 const BADGE_ID = 'IDC_except_badge';
 
-/** 목록 행의 제목·댓글 링크. 목록형·앨범형·카드형을 모두 덮는다. */
+/** Title links in list rows; covers list, album and card layouts. */
 const LINK_SELECTOR = 'a.article, a.tit';
-/** 목록 행의 게시판 칸. 실측상 .board_name은 앵커 자체다. */
+/** Board cell in a list row. In practice .board_name is the anchor itself. */
 const BOARD_LINK_SELECTOR =
   'a.board_name[href*="/menus/"], .board_name a[href*="/menus/"]';
 
 let config: AppConfig;
 let excluded: number[] = [];
-/** 배지의 "펼치기"를 누른 상태. 화면을 옮기면 풀린다. */
+/** Set while the badge's reveal toggle is on; resets on navigation. */
 let revealed = false;
 
-// --- 읽은 글 ---
+// --- Read articles ---
 
 async function recordCurrentArticle(): Promise<void> {
   if (config.read.enabled !== 1) return;
@@ -64,23 +65,23 @@ async function paintReadArticles(): Promise<void> {
   }
 }
 
-// --- 게시판 카탈로그 수집 ---
+// --- Board catalog harvesting ---
 
 /**
- * 사이드바 게시판 목록과 목록 행의 게시판 칸에서 menuId↔이름을 모은다.
+ * Collects menuId -> name from the sidebar and from list-row board cells.
  *
- * 사이드바 링크의 클래스는 `Sidebar_link__gAh1M` 같은 CSS-module 해시라 배포마다 바뀐다.
- * 대신 href 형태와 "표의 행 안에 있지 않다"는 조건으로 골라낸다.
+ * Sidebar link classes are CSS-module hashes (`Sidebar_link__gAh1M`) that
+ * change every deploy, so selection relies on the href shape instead.
  */
 async function harvestBoards(cafeId: string): Promise<void> {
   const boards: Record<string, string> = {};
 
-  // 리뉴얼(/menus/{id})과 레거시(search.menuid={id}) 두 형식을 모두 받는다.
+  // Accepts both the new (/menus/{id}) and legacy (search.menuid={id}) forms.
   for (const a of document.querySelectorAll<HTMLAnchorElement>(
     'a[href*="/menus/"], a[href*="search.menuid="]',
   )) {
     const menuId = parseMenuId(a.getAttribute('href'));
-    if (menuId === undefined || menuId === 0) continue; // 0은 전체글보기
+    if (menuId === undefined || menuId === 0) continue; // 0 is the all-articles view
 
     const name = a.textContent?.trim();
     if (!name || name.length > 40) continue;
@@ -88,8 +89,8 @@ async function harvestBoards(cafeId: string): Promise<void> {
     boards[String(menuId)] = name;
   }
 
-  // 카페 이름. 카페 홈에서는 주소 자체가 이름이고, 그 외 화면에서는 홈 링크를 찾는다.
-  // (첫 cafe.naver.com 링크는 게시글일 수 있으므로 홈 형태에 맞는 것만 받는다)
+  // Cafe name: the home URL is the name itself; elsewhere look for a home link.
+  // The first cafe.naver.com link may be an article, so match the home shape.
   const view = getCafeView(location);
   let cafeName = view.kind === 'home' ? view.cafeName : undefined;
 
@@ -111,9 +112,9 @@ async function harvestBoards(cafeId: string): Promise<void> {
   await mergeCafeBoards(cafeId, { cafeName, boards });
 }
 
-// --- 게시판 제외 ---
+// --- Board exclusion ---
 
-/** 제외 대상 행을 숨기고 숨긴 개수를 돌려준다. */
+/** Hides excluded rows and returns how many were hidden. */
 function applyExclusion(): number {
   let hidden = 0;
 
@@ -135,10 +136,11 @@ function applyExclusion(): number {
 }
 
 /**
- * "N개 숨김 · 펼치기" 배지.
+ * The "N hidden / reveal" badge.
  *
- * 서버가 한 페이지 분량(15개)을 보낸 뒤 클라이언트에서 숨기는 방식이라, 제외한 게시판이
- * 많으면 화면에 남는 글이 눈에 띄게 줄어든다. 몇 개가 숨겨졌는지 알려 준다.
+ * The server sends a full page (15 rows) and hiding happens client-side, so
+ * excluding several boards visibly thins the list. The badge says how many
+ * rows went away.
  */
 function renderBadge(hidden: number): void {
   const existing = document.getElementById(BADGE_ID);
@@ -165,7 +167,7 @@ function renderBadge(hidden: number): void {
     badge.dataset.hidden === String(hidden) &&
     badge.dataset.label === label
   ) {
-    return; // 내용이 같으면 DOM을 건드리지 않는다(관찰자 되먹임 방지)
+    return; // Leave the DOM alone when unchanged, to avoid observer feedback
   }
   badge.dataset.hidden = String(hidden);
   badge.dataset.label = label;
@@ -186,7 +188,7 @@ function renderBadge(hidden: number): void {
   badge.append(text, toggle);
 }
 
-// --- 실행 ---
+// --- Entry point ---
 
 let pending: number | undefined;
 
@@ -227,7 +229,7 @@ async function init(): Promise<void> {
     });
   }
 
-  // #cafe_content 자체가 나중에 생기는 경우(SPA 초기 렌더)를 대비해 body도 한 번 본다.
+  // #cafe_content may appear later during the SPA's first render; watch body too.
   if (target !== document.body && document.body) {
     new MutationObserver(schedule).observe(document.body, { childList: true });
   }
