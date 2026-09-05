@@ -1,0 +1,90 @@
+/*
+ * Styles used by the content scripts.
+ *
+ * Injected into every frame, so it covers all three documents: cafe home,
+ * board, and the article iframe. The browser applies it to SPA-inserted
+ * elements automatically, so nothing has to watch for changes.
+ *
+ * src/content/blur/index.ts imports this file and toggles marker classes on
+ * <html> to turn the rules on and off.
+ */
+
+/* --- Image hiding (stealth mode) --- */
+
+html.IDC_blur img,
+html.IDC_blur video,
+html.IDC_blur .se-image-resource {
+  opacity: 0.05;
+  transition: opacity 0.15s ease-in-out;
+}
+
+/*
+ * Thumbnails drawn as background images.
+ *
+ * opacity fades children too. Applying [style*='background-image'] document-wide
+ * also catches text holders such as Naver's account name box
+ * (div.gnb_my_namebox), blanking the nickname — so it is scoped to cafe content.
+ */
+html.IDC_blur_bg #cafe_content [style*='background-image'],
+html.IDC_blur_bg #main-area [style*='background-image'],
+html.IDC_blur_bg .article-board [style*='background-image'],
+html.IDC_blur_bg .ArticleContentBox [style*='background-image'],
+html.IDC_blur_bg .thumb,
+html.IDC_blur_bg .se-module-oglink-thumbnail {
+  opacity: 0.05;
+  transition: opacity 0.15s ease-in-out;
+}
+
+/* Reveal the original on hover; higher specificity beats the rules above. */
+html.IDC_blur_hover img:hover,
+html.IDC_blur_hover video:hover,
+html.IDC_blur_hover .se-image-resource:hover,
+html.IDC_blur_hover #cafe_content [style*='background-image']:hover,
+html.IDC_blur_hover #main-area [style*='background-image']:hover,
+html.IDC_blur_hover .article-board [style*='background-image']:hover,
+html.IDC_blur_hover .ArticleContentBox [style*='background-image']:hover,
+html.IDC_blur_hover .thumb:hover,
+html.IDC_blur_hover .se-module-oglink-thumbnail:hover {
+  opacity: 1;
+}
+
+/* --- Read articles --- */
+
+.IDC_read,
+.IDC_read * {
+  color: #959595 !important;
+}
+
+/* --- Boards excluded from the all-articles list --- */
+
+.IDC_hidden_board {
+  display: none !important;
+}
+
+/* The "N hidden / reveal" badge */
+#IDC_except_badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 6px 0;
+  padding: 6px 10px;
+  border-radius: 6px;
+  background: #f5f6f8;
+  color: #888;
+  font-size: 12px;
+}
+
+#IDC_except_badge button {
+  padding: 2px 8px;
+  border: 1px solid #d0d0d0;
+  border-radius: 4px;
+  background: #fff;
+  color: #666;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+#IDC_except_badge button:hover {
+  border-color: #03c75a;
+  color: #03c75a;
+}
